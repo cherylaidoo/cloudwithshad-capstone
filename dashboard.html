@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Feedback Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #0A1628;
+      color: white;
+      margin: 40px;
+    }
+
+    h1 {
+      color: #00B4D8;
+    }
+
+    .card {
+      background: #1A2F4A;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>📊 Feedback Analytics Dashboard</h1>
+
+<div class="card">
+  <h2>Total Feedback: <span id="total"></span></h2>
+</div>
+
+<div class="grid">
+
+  <div class="card">
+    <h3>Sentiment Breakdown</h3>
+    <canvas id="sentimentChart"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>Top Entities</h3>
+    <canvas id="entityChart"></canvas>
+  </div>
+
+</div>
+
+<div class="card">
+  <h3>Recent Feedback</h3>
+  <ul id="recent"></ul>
+</div>
+
+<script>
+
+const API_URL = "https://cg1t60nri2.execute-api.us-east-1.amazonaws.com/stats";
+
+async function loadDashboard() {
+
+  const res = await fetch(API_URL);
+  const data = await res.json();
+
+  document.getElementById("total").innerText = data.total_feedback;
+
+  // Sentiment chart
+  new Chart(document.getElementById("sentimentChart"), {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(data.sentiment_breakdown),
+      datasets: [{
+        data: Object.values(data.sentiment_breakdown)
+      }]
+    }
+  });
+
+  // Entity chart
+  new Chart(document.getElementById("entityChart"), {
+    type: "bar",
+    data: {
+      labels: data.top_entities.map(x => x[0]),
+      datasets: [{
+        label: "Mentions",
+        data: data.top_entities.map(x => x[1])
+      }]
+    }
+  });
+
+  // Recent feedback
+  const list = document.getElementById("recent");
+
+  data.recent_feedback.forEach(item => {
+    const li = document.createElement("li");
+    li.innerText = item.sentiment + " - " + item.message;
+    list.appendChild(li);
+  });
+
+}
+
+loadDashboard();
+
+</script>
+
+</body>
+</html>
